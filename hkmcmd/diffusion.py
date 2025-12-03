@@ -28,7 +28,9 @@ def main(argv):
     args.species = args.species.split(",")
 
     # Read system data.
-    system_data = system.SystemData(args.system, args.prefix, filename_json=args.filename_json)
+    system_data = system.SystemData(
+        args.system, args.prefix, filename_json=args.filename_json
+    )
     system_data.read_json()
     system_data.clean()
 
@@ -54,7 +56,9 @@ def main(argv):
     )
 
     # Create the Voxels object.
-    voxels_datafile = voxels.Voxels(box, system_data.scaling_diffusion["number_of_voxels"])
+    voxels_datafile = voxels.Voxels(
+        box, system_data.scaling_diffusion["number_of_voxels"]
+    )
 
     # Create the SystemState instance.
     system_state = system.SystemState(filename=args.filename_system_state)
@@ -146,7 +150,6 @@ class Diffusion:
         direct_transition_method: Union[None, str] = None,
         global_rate_method: Union[None, str] = None,
         filename_trajectory: Union[None, str] = None,
-        
     ):
 
         # Positional arguments
@@ -200,7 +203,9 @@ class Diffusion:
 
         # Read in or calculate the mvabfa.
         if os.path.exists(self.name + ".mvabfa.txt") and self.overwrite is False:
-            molecule_IDs, timesteps, mvabfa = read_mvabfa_file(self.name + ".mvabfa.txt")
+            molecule_IDs, timesteps, mvabfa = read_mvabfa_file(
+                self.name + ".mvabfa.txt"
+            )
         elif self.direct_transition_method == "fuzzy_boundary":
             mvabfa_file = io.FileTracker(
                 self.name + ".mvabfa.txt", overwrite=self.overwrite
@@ -507,7 +512,9 @@ def calculate_direct_transition_rates(
         for _ in set([mol.kind for mol in molecules_list])
     }
     for mol_kind, direct_transition_counts_here in direct_transition_counts.items():
-        mol_idxs = [idx for idx, mol in enumerate(molecules_list) if mol.kind == mol_kind]
+        mol_idxs = [
+            idx for idx, mol in enumerate(molecules_list) if mol.kind == mol_kind
+        ]
         positions = molecular_voxel_assignment_by_frame_array[:, mol_idxs]
         for midx in mol_idxs:
             voxel_list = molecular_voxel_assignment_by_frame_array[:, midx].flatten()
@@ -516,8 +523,13 @@ def calculate_direct_transition_rates(
             to_from, count = np.unique(transitions[:-1, :], axis=0, return_counts=True)
             for idx, tf in enumerate((to_from)):
                 direct_transition_counts_here[tf[0], tf[1]] += count[idx]
-        direct_transition_rates[mol_kind] = (
-            direct_transition_counts_here / adjacent_transition_time / np.unique(positions[:-1,:], return_counts=True)[1][:,None]
+        starting_counts = np.zeros((total_number_of_voxels, 1))
+        for idx, val in zip(*np.unique(positions[:-1, :], return_counts=True)):
+            starting_counts[idx, 0] = val
+        direct_transition_rates[mol_kind] = np.where(
+            starting_counts != 0,
+            direct_transition_counts_here / adjacent_transition_time / starting_counts,
+            0,
         )
     return direct_transition_rates
 
@@ -822,7 +834,9 @@ def calculate_mvabfa_fuzzy_boundary(
 ) -> tuple:
 
     molecules_list = deepcopy(molecules_list)
-    atoms_list, _, _, _, _ = interactions.get_interactions_lists_from_molcules_list(molecules_list)
+    atoms_list, _, _, _, _ = interactions.get_interactions_lists_from_molcules_list(
+        molecules_list
+    )
     adj_list = [
         [
             idx2
