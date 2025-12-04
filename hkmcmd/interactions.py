@@ -710,6 +710,35 @@ def find_overlaps(coordinates, tolerance=0.0000_0010):
     return np.where(np.triu(overlaps, k=1))
 
 
+def squeeze_coordinates_into_box(coordinates, box, fudge=0.0000_0010):
+    """Squeeze coordinates into a box.
+
+    Parameters
+    ----------
+    coordinates: np.ndarray
+        Array of shape (n_atoms, 3) containing the coordinates of the atoms.
+    box: list
+        [ [xmin,xmax], [ymin,ymax], [zmin,zmax] ]
+    fudge: float, optional
+        A small value to ensure coordinates are within the box boundaries
+        (ensures remove_overlaps doesn't run forever in the extremely rare
+        chance that two particles overlap at xmax, ymax, zmax).
+    """
+    box = np.array(box)
+    for i in range(3):
+        coordinates[:, i] = np.where(
+            coordinates[:, i] > box[i][1],
+            box[i][1] - fudge,
+            coordinates[:, i],
+        )
+        coordinates[:, i] = np.where(
+            coordinates[:, i] < box[i][0] + fudge,
+            box[i][0] + fudge,
+            coordinates[:, i],
+        )
+    return coordinates
+
+
 def remove_overlaps(coordinates, box, tolerance=0.0000_0010, maximum_iterations=None):
     """Remove overlaps in the coordinates of atoms in a periodic box.
 
@@ -748,6 +777,7 @@ def remove_overlaps(coordinates, box, tolerance=0.0000_0010, maximum_iterations=
     # Catch atomic overlaps
     overlaps = True
     iteration = 0
+    coordinates = squeeze_coordinates_into_box(coordinates, box, fudge=tolerance*1.01)
     while overlaps:
         iteration += 1
         if iteration > maximum_iterations:
@@ -774,6 +804,8 @@ def remove_overlaps(coordinates, box, tolerance=0.0000_0010, maximum_iterations=
         # Check if all overlaps are removed
         if overlap_idxs_wrapped[0].size == 0 and overlap_idxs_unwrapped[0].size == 0:
             overlaps = False
+
+        coordinates = squeeze_coordinates_into_box(coordinates, box, fudge=tolerance*1.01)
 
     return coordinates
 
