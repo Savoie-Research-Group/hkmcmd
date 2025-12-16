@@ -124,7 +124,7 @@ def main(argv):
         species=args.species,
         recursion_interval=system_data.scaling_diffusion["recursion_interval"],
     )
-    global_diffusion_rates = diffusion_handler.calculate_global_diffusion_rates()
+    global_diffusion_rates = diffusion_handler.calculate_global_diffusion_rates(species=args.species)
 
     # Write the global diffusion rates to a file.
     file_diffusion = io.FileTracker(args.filename_diffusion)
@@ -885,7 +885,7 @@ def calculate_mvabfa_fuzzy_boundary(
     )
     mvabfa = np.transpose(mvabfa)
     return (
-        [molecule.ID for molecule in molecules_list],
+        [int(molecule.ID) for molecule in molecules_list],
         timesteps,
         mvabfa,
     )

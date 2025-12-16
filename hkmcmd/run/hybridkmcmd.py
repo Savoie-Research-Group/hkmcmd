@@ -161,7 +161,7 @@ def main(argv):
             molecules_list,
             reactive_event,
             box,
-            tolerance=0.0000_0010,
+            tolerance=0.0100_0000,
             maximum_iterations=None,
         )
         system_state.update_molecules(molecules_list)

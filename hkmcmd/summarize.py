@@ -16,7 +16,7 @@ def main(argv):
     return
 
 
-def summarize_system_state(system, prefix):
+def summarize_system_state(system_name, prefix):
     """
     Summarize the system data and state.
     
@@ -29,7 +29,7 @@ def summarize_system_state(system, prefix):
     """
 
     # Read the system data and state
-    system_data = system.SystemData(system, f"{prefix}")
+    system_data = system.SystemData(system_name, f"{prefix}")
     system_data.read_json()
     system_state = system.SystemState(f"{prefix}.system_state.json")
     system_state.read_data_from_json()
