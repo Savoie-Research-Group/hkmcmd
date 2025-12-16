@@ -455,9 +455,9 @@ class Reaction:
 
     def check_for_json_inputs(self):
         if self.reactant_molecules is not None:
-            if len(set([type(_) for _ in self.reactant_molecules])) != 1:
-                raise ValueError("Reactant molecules must all be the same type")
-            if type(self.reactant_molecules[0]) != Molecule:
+            #if len(set([type(_) for _ in self.reactant_molecules])) != 1:
+             #   raise ValueError("Reactant molecules must all be the same type")
+            if type(self.reactant_molecules[0]) == dict:
                 self.reactant_molecules = [
                     Molecule(**_) for _ in self.reactant_molecules
                 ]
@@ -839,9 +839,10 @@ def update_molecules_list_with_reaction(
     ]
     molecules_list += reactive_event.product_molecules
     molecules_list = update_molecules_list_IDs(molecules_list, reset_atom_IDs=False)
-    molecules_list = remove_overlaps_from_molecules_list(
-        molecules_list, box, tolerance=tolerance, maximum_iterations=maximum_iterations
-    )
+    if tolerance is not None:
+        molecules_list = remove_overlaps_from_molecules_list(
+            molecules_list, box, tolerance=tolerance, maximum_iterations=maximum_iterations
+        )
     return molecules_list
 
 
