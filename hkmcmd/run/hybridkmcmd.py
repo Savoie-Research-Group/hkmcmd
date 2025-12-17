@@ -4,7 +4,7 @@
 #    dylan.gilley@gmail.com
 
 
-import sys
+import sys, os, csv
 import numpy as np
 from hkmcmd import interactions, voxels, system, io, reaction
 
@@ -89,6 +89,20 @@ def main(argv):
     }
     if system_data.scaling_diffusion["well-mixed"] is False:
         diffusion_rates_dict_matrix = io.parse_diffusion_file(args.filename_diffusion)
+
+    # Create atom voxel tracker file
+    if system_data.hkmcmd["track_atom_voxels"] is True and args.diffusion_cycle == 0:
+        with open("atom_voxel_assignment.csv", "w", newline="") as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(["time"] + [f"atom{idx}" for idx in range(len(atoms_list))])
+        voxel_assignment = [0] * len(atoms_list)
+        for molecule in molecules_list:
+            for atom in molecule.atoms:
+                atom_idx = atom.ID - 1  # assuming atom IDs start from 1
+                voxel_assignment[atom_idx] = molecule.voxel_idx[0]
+        with open("atom_voxel_assignment.csv", "a", newline="") as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow([0.0] + voxel_assignment)
 
     # Begin the KMC loop
     moleculecount_starting = len(molecules_list)
@@ -178,6 +192,16 @@ def main(argv):
             Reacting = False
 
         my_debugger()
+
+    if system_data.hkmcmd["track_atom_voxels"] is True:
+        voxel_assignment = [0] * len(atoms_list)
+        for molecule in molecules_list:
+            for atom in molecule.atoms:
+                atom_idx = atom.ID - 1  # assuming atom IDs start from 1
+                voxel_assignment[atom_idx] = molecule.voxel_idx[0]
+        with open("atom_voxel_assignment.csv", "a", newline="") as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow([dt] + voxel_assignment)
 
     # Write the system_state file
     system_state.write_to_json(args.filename_system_state)
