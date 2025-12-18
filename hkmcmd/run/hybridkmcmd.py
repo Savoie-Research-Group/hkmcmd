@@ -92,7 +92,7 @@ def main(argv):
 
     # Create atom voxel tracker file
     if system_data.hkmcmd["track_atom_voxels"] is True and args.diffusion_cycle == 0:
-        with open("atom_voxel_assignment.csv", "w", newline="") as csvfile:
+        with open(f"{args.prefix}.atom_voxel_assignment.csv", "w", newline="") as csvfile:
             csvwriter = csv.writer(csvfile)
             csvwriter.writerow(["time"] + [f"atom{idx}" for idx in range(len(atoms_list))])
         voxel_assignment = [0] * len(atoms_list)
@@ -100,7 +100,7 @@ def main(argv):
             for atom in molecule.atoms:
                 atom_idx = atom.ID - 1  # assuming atom IDs start from 1
                 voxel_assignment[atom_idx] = molecule.voxel_idx[0]
-        with open("atom_voxel_assignment.csv", "a", newline="") as csvfile:
+        with open(f"{args.prefix}.atom_voxel_assignment.csv", "a", newline="") as csvfile:
             csvwriter = csv.writer(csvfile)
             csvwriter.writerow([0.0] + voxel_assignment)
 
@@ -175,7 +175,7 @@ def main(argv):
             molecules_list,
             reactive_event,
             box,
-            tolerance=0.0100_0000,
+            tolerance=0.0000_0010,
             maximum_iterations=None,
         )
         system_state.update_molecules(molecules_list)
@@ -193,15 +193,18 @@ def main(argv):
 
         my_debugger()
 
-    if system_data.hkmcmd["track_atom_voxels"] is True:
-        voxel_assignment = [0] * len(atoms_list)
         for molecule in molecules_list:
-            for atom in molecule.atoms:
-                atom_idx = atom.ID - 1  # assuming atom IDs start from 1
-                voxel_assignment[atom_idx] = molecule.voxel_idx[0]
-        with open("atom_voxel_assignment.csv", "a", newline="") as csvfile:
-            csvwriter = csv.writer(csvfile)
-            csvwriter.writerow([dt] + voxel_assignment)
+            molecule.assign_voxel_idx(voxels_datafile)
+        
+        if system_data.hkmcmd["track_atom_voxels"] is True:
+            voxel_assignment = [0] * len(atoms_list)
+            for molecule in molecules_list:
+                for atom in molecule.atoms:
+                    atom_idx = atom.ID - 1  # assuming atom IDs start from 1
+                    voxel_assignment[atom_idx] = molecule.voxel_idx[0]
+            with open(f"{args.prefix}.atom_voxel_assignment.csv", "a", newline="") as csvfile:
+                csvwriter = csv.writer(csvfile)
+                csvwriter.writerow([dt] + voxel_assignment)
 
     # Write the system_state file
     system_state.write_to_json(args.filename_system_state)
