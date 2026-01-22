@@ -106,10 +106,18 @@ def main(argv):
 
     # diffusion rates
     diffusion_rates = {}
-    conversion = np.sqrt(system_data.lammps["LJ_energy"]) * system_data.lammps["LJ_distance"]/np.sqrt(system_data.lammps["LJ_mass"])
     voxel_length = (voxels_datafile.xbounds[1] - voxels_datafile.xbounds[0]) * system_data.lammps["LJ_distance"]
-    diffusion_rates["A"] = args.temperature * args.gamma / 100 * conversion / (voxel_length**2)
-    diffusion_rates["A2"] = args.temperature * args.gamma / 200 * conversion / (voxel_length**2)
+    #conversion = np.sqrt(system_data.lammps["LJ_energy"]) * system_data.lammps["LJ_distance"]/np.sqrt(system_data.lammps["LJ_mass"])
+    #diffusion_rates["A"] = args.temperature * args.gamma / 100 * conversion / (voxel_length**2)
+    #diffusion_rates["A2"] = args.temperature * args.gamma / 200 * conversion / (voxel_length**2)
+    l = voxel_length
+    T_lj = args.temperature
+    gamma_lj = args.gamma
+    sigma = system_data.lammps["LJ_distance"]
+    epsilon = system_data.lammps["LJ_energy"]
+    m = system_data.lammps["LJ_mass"]
+    diffusion_rates["A"] = ( 6 / (l**2) ) * ( (T_lj*gamma_lj) / (100.0) ) * ( (sigma*np.sqrt(epsilon)) / (np.sqrt(m)) )
+    diffusion_rates["A2"] = ( 6 / (l**2) ) * ( (T_lj*gamma_lj) / (200.0) ) * ( (sigma*np.sqrt(epsilon)) / (np.sqrt(m)) )
 
     # Process simulation in chunks
     for chunk_idx in range(num_chunks):
