@@ -20,6 +20,7 @@ def main(argv):
     parser.add_argument("-gamma", type=float, default=0.03)
     parser.add_argument("-total_steps", type=int, default=2000)
     parser.add_argument("-print_every", type=int, default=100)
+    parser.add_argument("-voxels", type=str, default="None")
     args = parser.parse_args()
 
     # set debugger
@@ -57,7 +58,11 @@ def main(argv):
     )
 
     # Create the Voxels object
-    voxels_datafile = voxels.Voxels(box, system_data.scaling_diffusion["number_of_voxels"])
+    if args.voxels != "None":
+        number_of_voxels = tuple(map(int, args.voxels.split(",")))
+    else:
+        number_of_voxels = system_data.scaling_diffusion["number_of_voxels"]
+    voxels_datafile = voxels.Voxels(box, number_of_voxels)
 
     # Create the SystemState instance
     system_state = system.SystemState(filename=args.filename_system_state)
@@ -107,9 +112,6 @@ def main(argv):
     # diffusion rates
     diffusion_rates = {}
     voxel_length = (voxels_datafile.xbounds[1] - voxels_datafile.xbounds[0]) * system_data.lammps["LJ_distance"]
-    #conversion = np.sqrt(system_data.lammps["LJ_energy"]) * system_data.lammps["LJ_distance"]/np.sqrt(system_data.lammps["LJ_mass"])
-    #diffusion_rates["A"] = args.temperature * args.gamma / 100 * conversion / (voxel_length**2)
-    #diffusion_rates["A2"] = args.temperature * args.gamma / 200 * conversion / (voxel_length**2)
     l = voxel_length
     T_lj = args.temperature
     gamma_lj = args.gamma
@@ -313,7 +315,7 @@ def write_chunk_to_csv(prefix, data_time, data_voxels, data_types, atoms_list, m
         df.to_csv(f"{prefix}.3Dkmc.csv", mode='a', header=False, index=False)
 
 
-def get_face_sharing_neighbors_with_partial_periodicity(voxels):
+def get_face_sharing_neighbors_with_partial_periodicity(voxels, partial_periodicity=(False, False, False)):
     """
     Get face-sharing neighbors for each voxel with periodic y,z and non-periodic x.
     
@@ -347,13 +349,24 @@ def get_face_sharing_neighbors_with_partial_periodicity(voxels):
             
             # Handle x dimension (non-periodic)
             if ni < 0 or ni >= nx:
-                continue  # Skip if outside x bounds
+                if partial_periodicity[0] is True:
+                    ni = ni % nx
+                else:
+                    continue  # Skip if outside x bounds
                 
             # Handle y dimension (periodic)
-            nj = nj % ny
+            if nj < 0 or nj >= ny:
+                if partial_periodicity[1] is True:
+                    nj = nj % ny
+                else:
+                    continue  # Skip if outside y bounds
             
             # Handle z dimension (periodic)  
-            nk = nk % nz
+            if nk < 0 or nk >= nz:
+                if partial_periodicity[2] is True:
+                    nk = nk % nz
+                else:
+                    continue  # Skip if outside z bounds
             
             # Convert back to linear index
             neighbor_idx = ni * ny * nz + nj * nz + nk

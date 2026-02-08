@@ -18,7 +18,7 @@ def isfloat_str(string):
         return False
 
 
-def find_dist_same(geo, box):
+def find_dist_same(geo, box, periodic=[True, True, True]):
     """Calculates MIC distance between points.
 
     Calculates the minimum image convention (MIC) distance between points,
@@ -43,7 +43,7 @@ def find_dist_same(geo, box):
     for i in range(3):
         dist = sds.squareform(sds.pdist(geo[:, i : i + 1], "minkowski", p=1.0))
         l, l2 = box[i][1] - box[i][0], (box[i][1] - box[i][0]) / 2.0
-        while not (dist <= l2).all():
+        while not (dist <= l2).all() and periodic[i] is True:
             dist -= l * (dist > l2)
             dist = np.abs(dist)
         rs += dist**2
